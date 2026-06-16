@@ -3,11 +3,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
 import { VerifyEmailPage } from "../features/auth/pages/VerifyEmailPage";
+import { ForgotPasswordPage } from "../features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../features/auth/pages/ResetPasswordPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { ProfilePage } from "../features/profile/pages/ProfilePage";
-import { ForgotPasswordPage } from "../features/auth/pages/ForgotPasswordPage";
 import { AdminRoute } from "./AdminRoute";
+import { AdminDashboard } from "../features/admin/pages/AdminDashboard";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -21,30 +22,12 @@ export const AppRoutes: React.FC = () => {
 
       {/* Himoyalangan marshrutlar (Faqat tizimga kirganlar uchun) */}
       <Route element={<ProtectedRoute />}>
-        <Route
-          path="/profile"
-          element={
-            <div className="p-8 font-bold">
-              <ProfilePage/>
-            </div>
-          }
-        />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       {/* Faqat Adminlar uchun */}
       <Route element={<AdminRoute />}>
-        <Route
-          path="/admin/dashboard"
-          element={
-            <div className="p-8 font-bold text-red-600">
-              Admin boshqaruv paneli
-            </div>
-          }
-        />
-      </Route>
-
-      <Route element={<ProtectedRoute />}>
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Route>
 
       {/* Noto'g'ri URL yozilsa avtomat yo'naltirish */}

@@ -1,23 +1,25 @@
 package com.auth.backend.util;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import com.auth.backend.constant.EnvironmentValues;
 import com.auth.backend.constant.ResponseMessage;
 import com.auth.backend.entity.UserEntity;
 import com.auth.backend.exception.CustomNotFoundException;
 import com.auth.backend.repository.UserRepository;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -74,12 +76,13 @@ public class JwtUtil {
         return extractClaims(token).getExpiration();
     }
     public boolean isTokenExpired(String token){
-        return extractExpiration(token).after(new Date());
+        return extractExpiration(token).before(new Date());
     }
+
 
     public boolean validateToken(String token){
         try {
-            return isTokenExpired(token) && extractSubject(token) != null;
+            return !isTokenExpired(token) && extractSubject(token) != null;
         } catch (Exception e){
             return false;
         }
