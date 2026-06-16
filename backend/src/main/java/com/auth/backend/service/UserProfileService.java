@@ -48,6 +48,8 @@ public class UserProfileService {
         Optional.ofNullable(request.getSocialLinks()).ifPresent(user::setSocialLinks);
         Optional.ofNullable(request.getPhone()).ifPresent(user::setPhone);
 
+        userManagement.saveUser(user);
+
         return UserResponse.from(user);
     }
     @Transactional
@@ -70,6 +72,7 @@ public class UserProfileService {
         }
         userManagement.saveUser(user);
     }
+
 
 
 }
