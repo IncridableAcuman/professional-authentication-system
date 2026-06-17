@@ -10,9 +10,9 @@ public final class EnvironmentValues {
     @Value("${jwt.secret}")
     private String jwtSecret;
     @Value("${jwt.access_time}")
-    private int accessTime;
+    private long accessTime;
     @Value("${jwt.refresh_time}")
-    private int refreshTime;
+    private long refreshTime;
     @Value("${client.url}")
     private String clientUrl;
     @Value("${file.upload.dir}")

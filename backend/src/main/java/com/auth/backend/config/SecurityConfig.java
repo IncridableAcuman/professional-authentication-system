@@ -36,7 +36,6 @@ public class SecurityConfig {
                                 "/api-docs/**"
                         ).permitAll()
                         .requestMatchers(Endpoint.AUTH + "/**").permitAll()
-                        .requestMatchers("/error").permitAll()
                         .requestMatchers(Endpoint.ADMIN + Endpoint.USER).hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

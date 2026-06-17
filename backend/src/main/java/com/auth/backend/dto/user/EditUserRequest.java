@@ -2,6 +2,7 @@ package com.auth.backend.dto.user;
 
 import com.auth.backend.constant.ResponseMessage;
 import com.auth.backend.entity.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -21,6 +22,7 @@ public class EditUserRequest {
 
     private Gender gender;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date birthDate;
 
     private String phone;

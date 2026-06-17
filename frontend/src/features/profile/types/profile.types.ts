@@ -10,7 +10,6 @@ export enum Gender {
   FEMALE = 'FEMALE'
 }
 
-// Backenddagi UserResponse record bilan 1:1 mos
 export interface UserResponse {
   id: number;
   firstName: string | null;
@@ -22,7 +21,7 @@ export interface UserResponse {
   phone: string | null;
   enabled: boolean;
   avatar: string | null;
-  birthDate: string | null; // Date oson boshqarilishi uchun string (YYYY-MM-DD)
+  birthDate: string | null;
   bio: string | null;
   createdAt: string;
   updatedAt: string;
@@ -31,15 +30,19 @@ export interface UserResponse {
   socialLinks: string[];
 }
 
+// Bo'sh string "" kelganda uni null ga aylantiruvchi yordamchi qoida
+// Bu orqali .min(3) faqat ism/familiya rostdan ham yozilgandagina tekshiriladi
+const emptyToNull = z.literal('').transform(() => null);
+
 export const editUserSchema = z.object({
-  firstName: z.string().min(3, "Ism kamida 3 ta belgi bo'lishi kerak").max(50).nullable().optional(),
-  lastName: z.string().min(3, "Familiya kamida 3 ta belgi bo'lishi kerak").max(50).nullable().optional(),
+  firstName: z.string().min(3, "Ism kamida 3 ta belgi bo'lishi kerak").max(50).or(emptyToNull).nullable().optional(),
+  lastName: z.string().min(3, "Familiya kamida 3 ta belgi bo'lishi kerak").max(50).or(emptyToNull).nullable().optional(),
   username: z.string().min(3, "Username kamida 3 ta belgi bo'lishi kerak").max(50),
   gender: z.nativeEnum(Gender).nullable().optional(),
-  birthDate: z.string().nullable().optional(),
-  phone: z.string().nullable().optional(),
-  bio: z.string().max(500, "Bio 500 ta belgidan oshmasligi kerak").nullable().optional(),
-  country: z.string().nullable().optional(),
+  birthDate: z.string().or(emptyToNull).nullable().optional(),
+  phone: z.string().or(emptyToNull).nullable().optional(),
+  bio: z.string().max(500, "Bio 500 ta belgidan oshmasligi kerak").or(emptyToNull).nullable().optional(),
+  country: z.string().or(emptyToNull).nullable().optional(),
   skills: z.array(z.string()).optional(),
   socialLinks: z.array(z.string()).optional(),
 });

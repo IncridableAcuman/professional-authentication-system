@@ -11,13 +11,13 @@ import org.springframework.stereotype.Component;
 public class CookieUtil {
     private final EnvironmentValues environmentValues;
 
-    private static  void cookieManagement(String refreshToken,int expiration, HttpServletResponse response){
+    private static  void cookieManagement(String refreshToken,long expiration, HttpServletResponse response){
         Cookie cookie = new Cookie("refreshToken",refreshToken);
         cookie.setValue(refreshToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
         cookie.setPath("/");
-        cookie.setMaxAge(expiration);
+        cookie.setMaxAge((int) expiration);
 
         response.addCookie(cookie);
     }

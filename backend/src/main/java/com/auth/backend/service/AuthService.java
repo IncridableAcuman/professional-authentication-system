@@ -77,7 +77,7 @@ public class AuthService {
         if (!request.getPassword().equals(request.getConfirmPassword())){
             throw new CustomBadRequestException(ResponseMessage.MISMATCH_PASSWORD);
         }
-        if (jwtUtil.isTokenExpired(request.getToken())){
+        if (!jwtUtil.validateToken(request.getToken())){
             throw new CustomBadRequestException(ResponseMessage.EXPIRED_TOKEN);
         }
         UserEntity user = jwtUtil.extractUser(request.getToken());
