@@ -1,44 +1,49 @@
-import axios from 'axios';
+import axios, { type AxiosInstance, AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true, // Cookie'lar o'tishi uchun shart!
-  headers: {
-    'Content-Type': 'application/json',
-  },
+const axiosInstance: AxiosInstance = axios.create({
+  withCredentials: true,
+  baseURL: "http://localhost:8080/api/v1",
+  timeout: 10000,
 });
 
-// Request Interceptor: Har bir so'rovga Access Tokenni biriktirish
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response Interceptor: 401 (Unauthorized) bo'lganda avtomatik refresh qilish
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        // Backend: GET /api/v1/auth/refresh
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/refresh`, {
-          withCredentials: true,
-        });
-        const { accessToken } = res.data;
-        localStorage.setItem('accessToken', accessToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+axiosInstance.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
-    }
-    return Promise.reject(error);
-  }
+      return config;
+    },
+    (error: AxiosError) => Promise.reject(error)
 );
+
+axiosInstance.interceptors.response.use(
+    (response: AxiosResponse) => response,
+    async (error: AxiosError) => {
+      const originalRequest = error.config as InternalAxiosRequestConfig & {
+        _retry: boolean
+      }
+      if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+        originalRequest._retry = true;
+        // Agar xato refresh so'rovining o'zidan qaytsa, cheksiz siklga kirmaslik uchun darhol to'xtatamiz
+        if (originalRequest.url?.includes('/auth/refresh')) {
+          localStorage.removeItem("accessToken");
+          return Promise.reject(error);
+        }
+        try {
+          const { data } = await axiosInstance.get("/auth/refresh", { withCredentials: true });
+          localStorage.setItem("accessToken", data.accessToken);
+          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          return axiosInstance(originalRequest);
+        } catch (error) {
+          console.log(error);
+          localStorage.removeItem("accessToken");
+          window.location.href = "/login";
+          return Promise.reject(error)
+        }
+      }
+      return Promise.reject(error)
+    }
+);
+
+export default axiosInstance;

@@ -6,6 +6,8 @@ import com.auth.backend.dto.user.UserResponse;
 import com.auth.backend.entity.UserEntity;
 import com.auth.backend.exception.CustomNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -73,6 +75,13 @@ public class UserProfileService {
         userManagement.saveUser(user);
     }
 
+    public UserResponse me(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assert authentication != null;
+        UserEntity user = (UserEntity) authentication.getPrincipal();
+        assert user != null;
+        return UserResponse.from(user);
+    }
 
 
 }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping(Endpoint.PROFILE)
+@RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class UserProfileController {
     private final UserProfileService userProfileService;
@@ -39,5 +39,9 @@ public class UserProfileController {
     public ResponseEntity<String> removeSocialLink(@PathVariable Long id,@PathVariable String social){
         userProfileService.removeSocialLinks(id,social);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
+    }
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> me(){
+        return ResponseEntity.ok(userProfileService.me());
     }
 }

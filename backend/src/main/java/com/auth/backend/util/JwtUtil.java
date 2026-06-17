@@ -34,7 +34,7 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(environmentValues.getJwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    private String generateToken(UserEntity user,int expiration){
+    private String generateToken(UserEntity user,long expiration){
         Map<String,Object> claims = new HashMap<>();
 
         claims.put("id",user.getId());
@@ -46,11 +46,11 @@ public class JwtUtil {
 
         return Jwts
                 .builder()
-                .addClaims(claims)
                 .setSubject(user.getEmail())
+                .addClaims(claims)
                 .setIssuedAt(issueAt)
                 .setExpiration(expirationDate)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key)
                 .compact();
     }
     public String generateAccessToken(UserEntity user){
@@ -75,14 +75,11 @@ public class JwtUtil {
     public Date extractExpiration(String token){
         return extractClaims(token).getExpiration();
     }
-    public boolean isTokenExpired(String token){
-        return extractExpiration(token).before(new Date());
-    }
 
 
     public boolean validateToken(String token){
         try {
-            return !isTokenExpired(token) && extractSubject(token) != null;
+            return extractExpiration(token).after(new Date()) && extractSubject(token) != null;
         } catch (Exception e){
             return false;
         }
