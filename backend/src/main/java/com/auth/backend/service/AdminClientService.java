@@ -15,13 +15,13 @@ public class AdminClientService {
     @Transactional
     public void editRole(Long id, RoleRequest request){
         UserEntity user = userManagement.findUserById(id);
-        user.setRole(request.getRole());
+        user.setRole(request.role());
         userManagement.saveUser(user);
     }
     @Transactional
     public void removeUser(Long id){
         UserEntity user = userManagement.findUserById(id);
         tokenService.removeToken(user);
-        userManagement.saveUser(user);
+        userManagement.deleteUser(user);
     }
 }

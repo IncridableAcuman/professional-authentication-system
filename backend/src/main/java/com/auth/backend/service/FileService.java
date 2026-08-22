@@ -21,7 +21,7 @@ public class FileService {
 
     public String  saveFile(MultipartFile file){
         try {
-            Path uploadPath = Paths.get(environmentValues.uploadDir);
+            Path uploadPath = Paths.get(environmentValues.getUploadDir());
             if (!Files.exists(uploadPath)){
                 Files.createDirectories(uploadPath);
             }
@@ -40,7 +40,7 @@ public class FileService {
     }
     public void removeFile(String avatar){
         try {
-            Path filePath = Paths.get(environmentValues.uploadDir,avatar);
+            Path filePath = Paths.get(environmentValues.getUploadDir(),avatar);
             Files.deleteIfExists(filePath);
         } catch (IOException exception){
             throw new CustomInternalServerErrorException(exception.getMessage());

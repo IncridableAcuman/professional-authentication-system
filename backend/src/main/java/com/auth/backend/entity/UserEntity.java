@@ -4,13 +4,16 @@ import com.auth.backend.entity.enums.Gender;
 import com.auth.backend.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -21,6 +24,7 @@ import java.util.List;
 @Setter
 @Builder
 public class UserEntity implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,13 +35,13 @@ public class UserEntity implements UserDetails {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "username",nullable = false)
+    @Column(name = "username", nullable = false, unique = true)
     private String username;
 
-    @Column(name = "email",nullable = false,unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password",nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
     @Column(name = "role")
@@ -51,45 +55,47 @@ public class UserEntity implements UserDetails {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "enabled")
-    private boolean enabled=false;
+    @Builder.Default
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = false;
 
     @Column(name = "avatar")
     private String avatar;
 
     @Column(name = "birth_date")
-    private Date birthDate;
+    private LocalDate birthDate;
 
-    @Column(name = "bio",length = 500)
+    @Column(name = "bio", length = 500)
     private String bio;
 
     @Column(name = "country")
     private String country;
 
-    @Column(name = "skills")
+    // List<String> uchun JPA ElementCollection biriktirildi
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "skill")
     private List<String> skills;
 
-    @Column(name = "social_links")
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_social_links", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "social_link")
     private List<String> socialLinks;
 
-    @Column(name = "created_at")
+    // Native Hibernate annotatsiyalari ishlatildi
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void onCreate(){
-        this.createdAt=LocalDateTime.now();
-        this.updatedAt=LocalDateTime.now();
-    }
-    @PreUpdate
-    public void onUpdate(){
-        this.updatedAt=LocalDateTime.now();
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        if (this.role == null) {
+            return Collections.emptyList();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 }

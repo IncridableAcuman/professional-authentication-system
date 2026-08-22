@@ -5,43 +5,49 @@ import com.auth.backend.constant.ResponseMessage;
 import com.auth.backend.dto.user.EditUserRequest;
 import com.auth.backend.dto.user.UserResponse;
 import com.auth.backend.service.UserProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping(Endpoint.PROFILE)
 @RequiredArgsConstructor
 public class UserProfileController {
     private final UserProfileService userProfileService;
 
-    @PatchMapping("/{id}/avatar")
-    public ResponseEntity<String> uploadAvatar(@PathVariable Long id, @ModelAttribute MultipartFile avatar){
-        userProfileService.uploadAvatar(id,avatar);
+    @PatchMapping("/avatar")
+    public ResponseEntity<String> uploadAvatar(@RequestParam("avatar") MultipartFile avatar) {
+        userProfileService.uploadAvatar(avatar);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
     }
-    @PostMapping("/{id}/avatar/remove")
-    public ResponseEntity<String> removeAvatar(@PathVariable Long id){
-        userProfileService.removeAvatar(id);
+
+    @DeleteMapping("/avatar")
+    public ResponseEntity<String> removeAvatar() {
+        userProfileService.removeAvatar();
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
     }
-    @PatchMapping("/{id}/edit")
-    public ResponseEntity<UserResponse> editUser(@PathVariable Long id, @RequestBody EditUserRequest request){
-        return ResponseEntity.ok(userProfileService.editUser(id,request));
+
+    @PatchMapping("/edit")
+    public ResponseEntity<UserResponse> editUser(@Valid @RequestBody EditUserRequest request) {
+        return ResponseEntity.ok(userProfileService.editUser(request));
     }
-    @DeleteMapping("/{id}/skills/{skillName}")
-    public ResponseEntity<String> removeSkills(@PathVariable Long id,@PathVariable String skillName){
-        userProfileService.removeSkills(id,skillName);
+
+    @DeleteMapping("/skills/{skillName}")
+    public ResponseEntity<String> removeSkills(@PathVariable String skillName) {
+        userProfileService.removeSkills(skillName);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
     }
-    @DeleteMapping("/{id}/socials/{social}")
-    public ResponseEntity<String> removeSocialLink(@PathVariable Long id,@PathVariable String social){
-        userProfileService.removeSocialLinks(id,social);
+
+    @DeleteMapping("/socials/{social}")
+    public ResponseEntity<String> removeSocialLink(@PathVariable String social) {
+        userProfileService.removeSocialLinks(social);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
     }
+
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> me(){
+    public ResponseEntity<UserResponse> me() {
         return ResponseEntity.ok(userProfileService.me());
     }
 }

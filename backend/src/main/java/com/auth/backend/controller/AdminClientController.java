@@ -21,7 +21,7 @@ public class AdminClientController {
         adminClientService.editRole(id,request);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);
     }
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> removeUser(@PathVariable Long id){
         adminClientService.removeUser(id);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);

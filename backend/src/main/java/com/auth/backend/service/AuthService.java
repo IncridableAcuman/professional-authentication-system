@@ -29,11 +29,11 @@ public class AuthService {
     private final UserManagement userManagement;
 
     public void register(RegisterRequest request){
-        userManagement.isExistUser(request.getEmail());
+        userManagement.isExistUser(request.email());
         UserEntity user = new UserEntity();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(UserRole.USER);
         userManagement.saveUser(user);
 
@@ -41,21 +41,21 @@ public class AuthService {
 
     }
     public AuthResponse login(LoginRequest request,HttpServletResponse response){
-        UserEntity user = userManagement.findUserByEmail(request.getEmail());
+        UserEntity user = userManagement.findUserByEmail(request.email());
         if (!user.isEnabled()){
             throw new CustomBadRequestException(ResponseMessage.NOT_VERIFIED);
         }
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+        if (!passwordEncoder.matches(request.password(), user.getPassword())){
             throw new CustomBadRequestException(ResponseMessage.MISMATCH_PASSWORD);
         }
         return authResponse(user,response);
     }
-    public AuthResponse refresh(String refreshToken,HttpServletResponse response){
-        UserEntity user = jwtUtil.extractUser(refreshToken);
-        if (!jwtUtil.validateToken(refreshToken)){
+    public AuthResponse refresh(String refreshToken, HttpServletResponse response) {
+        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
             throw new CustomUnauthorizedException(ResponseMessage.INVALID_TOKEN);
         }
-        return authResponse(user,response);
+        UserEntity user = jwtUtil.extractUser(refreshToken);
+        return authResponse(user, response);
     }
     public void logout(String refreshToken,HttpServletResponse response){
         UserEntity user = jwtUtil.extractUser(refreshToken);
@@ -66,7 +66,7 @@ public class AuthService {
         cookieUtil.clearCookie(response);
     }
     public void forgotPassword(ForgotPasswordRequest request){
-        UserEntity user = userManagement.findUserByEmail(request.getEmail());
+        UserEntity user = userManagement.findUserByEmail(request.email());
         String token = jwtUtil.generateAccessToken(user);
         String url = environmentValues.getClientUrl() + "/reset-password?token=" + token;
 
@@ -74,14 +74,14 @@ public class AuthService {
         rabbitMQProducer.sendMessageWithRabbitMQ(payload);
     }
     public void resetPassword(ResetPasswordRequest request){
-        if (!request.getPassword().equals(request.getConfirmPassword())){
+        if (!request.password().equals(request.confirmPassword())){
             throw new CustomBadRequestException(ResponseMessage.MISMATCH_PASSWORD);
         }
-        if (!jwtUtil.validateToken(request.getToken())){
+        if (!jwtUtil.validateToken(request.token())){
             throw new CustomBadRequestException(ResponseMessage.EXPIRED_TOKEN);
         }
-        UserEntity user = jwtUtil.extractUser(request.getToken());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        UserEntity user = jwtUtil.extractUser(request.token());
+        user.setPassword(passwordEncoder.encode(request.password()));
         userManagement.saveUser(user);
     }
 

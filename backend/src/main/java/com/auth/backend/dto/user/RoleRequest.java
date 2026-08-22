@@ -1,9 +1,10 @@
 package com.auth.backend.dto.user;
 
+import com.auth.backend.constant.ResponseMessage;
 import com.auth.backend.entity.enums.UserRole;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-public class RoleRequest {
-    UserRole role;
-}
+public record RoleRequest(
+        @NotNull(message = ResponseMessage.GENDER_REQUIRED) // maxsus xabar berish mumkin
+        UserRole role
+) {}

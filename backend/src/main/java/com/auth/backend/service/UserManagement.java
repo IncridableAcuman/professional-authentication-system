@@ -21,6 +21,10 @@ public class UserManagement {
     public UserEntity findUserByEmail(String email){
         return userRepository.findByEmail(email).orElseThrow(()-> new CustomNotFoundException(ResponseMessage.NOT_FOUND));
     }
+    @Transactional
+    public void deleteUser(UserEntity user){
+        userRepository.delete(user);
+    }
 
     @Transactional
     public void saveUser(UserEntity user){

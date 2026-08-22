@@ -4,8 +4,8 @@ import com.auth.backend.entity.UserEntity;
 import com.auth.backend.entity.enums.Gender;
 import com.auth.backend.entity.enums.UserRole;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public record UserResponse(
@@ -19,16 +19,16 @@ public record UserResponse(
         String phone,
         boolean enabled,
         String avatar,
-        Date birthDate,
+        LocalDate birthDate,
         String bio,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         String country,
         List<String> skills,
         List<String> socialLinks
-
 ) {
-    public static UserResponse from(UserEntity user){
+    public static UserResponse from(UserEntity user) {
+        if (user == null) return null;
         return new UserResponse(
                 user.getId(),
                 user.getFirstName(),

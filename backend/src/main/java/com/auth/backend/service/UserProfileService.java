@@ -5,7 +5,10 @@ import com.auth.backend.dto.user.EditUserRequest;
 import com.auth.backend.dto.user.UserResponse;
 import com.auth.backend.entity.UserEntity;
 import com.auth.backend.exception.CustomNotFoundException;
+import com.auth.backend.exception.CustomUnauthorizedException;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,68 +23,82 @@ public class UserProfileService {
     private final UserManagement userManagement;
     private final FileService fileService;
 
-    public void uploadAvatar(Long id, MultipartFile avatar){
-        UserEntity user = userManagement.findUserById(id);
-        String avatarName=null;
-        if (avatar != null){
-            avatarName = fileService.saveFile(avatar);
+    private String sanitize(String input) {
+        return input == null ? null : Jsoup.clean(input, Safelist.none());
+    }
+
+    // Tizimga kirgan foydalanuvchini olish uchun yordamchi metod
+    private UserEntity getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new CustomUnauthorizedException(ResponseMessage.UNAUTHORIZED);
         }
-        Optional.ofNullable(avatarName).ifPresent(user::setAvatar);
-        userManagement.saveUser(user);
+        return userManagement.findUserByEmail(auth.getName());
     }
 
-    public void removeAvatar(Long id){
-        UserEntity user = userManagement.findUserById(id);
-        fileService.removeFile(user.getAvatar());
-        user.setAvatar(null);
-        userManagement.saveUser(user);
+    @Transactional
+    public void uploadAvatar(MultipartFile avatar) {
+        UserEntity user = getAuthenticatedUser();
+
+        if (avatar != null && !avatar.isEmpty()) {
+            // Eski avatarni o'chirish
+            if (user.getAvatar() != null) {
+                fileService.removeFile(user.getAvatar());
+            }
+            String avatarName = fileService.saveFile(avatar);
+            user.setAvatar(avatarName);
+            userManagement.saveUser(user);
+        }
     }
 
-    public UserResponse editUser(Long id, EditUserRequest request){
-        UserEntity user = userManagement.findUserById(id);
-        Optional.ofNullable(request.getFirstName()).ifPresent(user::setFirstName);
-        Optional.ofNullable(request.getLastName()).ifPresent(user::setLastName);
-        Optional.ofNullable(request.getUsername()).ifPresent(user::setUsername);
-        Optional.ofNullable(request.getBirthDate()).ifPresent(user::setBirthDate);
-        Optional.ofNullable(request.getBio()).ifPresent(user::setBio);
-        Optional.ofNullable(request.getCountry()).ifPresent(user::setCountry);
-        Optional.ofNullable(request.getGender()).ifPresent(user::setGender);
-        Optional.ofNullable(request.getSkills()).ifPresent(user::setSkills);
-        Optional.ofNullable(request.getSocialLinks()).ifPresent(user::setSocialLinks);
-        Optional.ofNullable(request.getPhone()).ifPresent(user::setPhone);
+    @Transactional
+    public void removeAvatar() {
+        UserEntity user = getAuthenticatedUser();
+        if (user.getAvatar() != null) {
+            fileService.removeFile(user.getAvatar());
+            user.setAvatar(null);
+            userManagement.saveUser(user);
+        }
+    }
+
+    @Transactional
+    public UserResponse editUser(EditUserRequest request) {
+        UserEntity user = getAuthenticatedUser();
+
+        Optional.ofNullable(request.firstName()).ifPresent(val -> user.setFirstName(sanitize(val)));
+        Optional.ofNullable(request.bio()).ifPresent(val -> user.setBio(sanitize(val)));
+        Optional.ofNullable(request.lastName()).ifPresent(user::setLastName);
+        Optional.ofNullable(request.username()).ifPresent(user::setUsername);
+        Optional.ofNullable(request.birthDate()).ifPresent(user::setBirthDate);
+        Optional.ofNullable(request.country()).ifPresent(user::setCountry);
+        Optional.ofNullable(request.gender()).ifPresent(user::setGender);
+        Optional.ofNullable(request.skills()).ifPresent(user::setSkills);
+        Optional.ofNullable(request.socialLinks()).ifPresent(user::setSocialLinks);
+        Optional.ofNullable(request.phone()).ifPresent(user::setPhone);
 
         userManagement.saveUser(user);
-
         return UserResponse.from(user);
     }
-    @Transactional
-    public void removeSkills(Long id,String skillName){
-        UserEntity user = userManagement.findUserById(id);
-        boolean isRemoved = user.getSkills()
-                .removeIf(skill-> skill.equals(skillName));
 
-        if (!isRemoved){
+    @Transactional
+    public void removeSkills(String skillName) {
+        UserEntity user = getAuthenticatedUser();
+        if (user.getSkills() == null || !user.getSkills().removeIf(skill -> skill.equals(skillName))) {
             throw new CustomNotFoundException(ResponseMessage.NOT_FOUND);
         }
         userManagement.saveUser(user);
     }
+
     @Transactional
-    public void removeSocialLinks(Long id,String social){
-        UserEntity user = userManagement.findUserById(id);
-        boolean isRemoved = user.getSocialLinks().removeIf(s->s.equals(social));
-        if (!isRemoved){
+    public void removeSocialLinks(String social) {
+        UserEntity user = getAuthenticatedUser();
+        if (user.getSocialLinks() == null || !user.getSocialLinks().removeIf(s -> s.equals(social))) {
             throw new CustomNotFoundException(ResponseMessage.NOT_FOUND);
         }
         userManagement.saveUser(user);
     }
 
-    public UserResponse me(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        assert authentication != null;
-        UserEntity user = (UserEntity) authentication.getPrincipal();
-        assert user != null;
-        return UserResponse.from(user);
+    public UserResponse me() {
+        return UserResponse.from(getAuthenticatedUser());
     }
-
-
 }

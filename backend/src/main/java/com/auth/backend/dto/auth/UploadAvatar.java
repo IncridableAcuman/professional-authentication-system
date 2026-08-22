@@ -1,9 +1,11 @@
+// UploadAvatar.java
 package com.auth.backend.dto.auth;
 
-import lombok.Data;
+import com.auth.backend.constant.ResponseMessage;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
-@Data
-public class UploadAvatar {
-    private MultipartFile avatar;
-}
+public record UploadAvatar(
+        @NotNull(message = ResponseMessage.FILE_REQUIRED)
+        MultipartFile avatar
+) {}

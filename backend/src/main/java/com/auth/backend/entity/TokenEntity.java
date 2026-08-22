@@ -12,18 +12,20 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-public class TokenEntity   {
+public class TokenEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "refresh_token",nullable = false)
+    @Column(name = "refresh_token", nullable = false, unique = true)
     private String refreshToken;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    // FetchType.LAZY ga o'tkazildi
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserEntity user;
 
-    @Column(name = "expiration")
+    @Column(name = "expiration", nullable = false)
     private LocalDateTime expiration;
 }
