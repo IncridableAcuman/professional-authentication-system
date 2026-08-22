@@ -1,7 +1,13 @@
 import axiosInstance from '../../../config/axiosInstance';
-import type { RoleRequest } from '../types/admin.types';
+import type { AdminUserListItem, RoleRequest } from '../types/admin.types';
 
 export const adminApi = {
+  // Barcha foydalanuvchilarni yuklash
+  getAllUsers: async (): Promise<AdminUserListItem[]> => {
+    const response = await axiosInstance.get<AdminUserListItem[]>('/admin/user');
+    return response.data;
+  },
+
   // Rolni tahrirlash (Query Param orqali id yuboriladi)
   editRole: async (id: number, request: RoleRequest) => {
     const response = await axiosInstance.patch<string>(`/admin/user?id=${id}`, request);
@@ -10,7 +16,6 @@ export const adminApi = {
 
   // Foydalanuvchini tizimdan o'chirish
   removeUser: async (id: number) => {
-    // Backend kodingizdagi @DeleteMapping mukammallashishi uchun /{id} shaklida yuboramiz
     const response = await axiosInstance.delete<string>(`/admin/user/${id}`);
     return response.data;
   }

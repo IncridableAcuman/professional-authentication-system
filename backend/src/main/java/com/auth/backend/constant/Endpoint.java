@@ -1,12 +1,16 @@
 package com.auth.backend.constant;
 
 public final class Endpoint {
-    private Endpoint() {} // Private constructor
+    private Endpoint() {}
 
+    // Base API Prefixes
     public static final String AUTH = "/api/v1/auth";
     public static final String ADMIN = "/api/v1/admin";
     public static final String PROFILE = "/api/v1/profile";
-    public static final String USER = "/api/v1/user";
+
+    // Sub-resource paths (relative)
+    public static final String USERS = "/users";
+    public static final String USER = "/user";
 
     public static final String REGISTER = "/register";
     public static final String LOGIN = "/login";

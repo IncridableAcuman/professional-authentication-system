@@ -1,68 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../services/adminApi';
 import type { AdminUserListItem } from '../types/admin.types';
 import { UserRole } from '../../profile/types/profile.types';
-import { Shield, Trash2, Edit2, UserCheck, UserX, Search, X } from 'lucide-react';
+import { Shield, Trash2, Edit2, UserCheck, UserX, Search, X, Loader2 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<AdminUserListItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [newRole, setNewRole] = useState<UserRole>(UserRole.USER);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Mock Foydalanuvchilar Ro'yxati (Amalda backenddan hamma userlar olib kelinadi)
-  const [users, setUsers] = useState<AdminUserListItem[]>([
-    { id: 1, firstName: "Izzatbek", lastName: "Abdusharipov", username: "incridable_acuman", email: "izzatbek@example.com", role: UserRole.ADMIN, enabled: true },
-    { id: 2, firstName: "Ali", lastName: "Valiyev", username: "ali_valiyev", email: "ali@example.com", role: UserRole.USER, enabled: true },
-    { id: 3, firstName: "Olim", lastName: "Hasanov", username: "olim99", email: "olim@example.com", role: UserRole.USER, enabled: false },
-  ]);
+  // 1. Backend'dan barcha foydalanuvchilarni yuklab olish
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi.getAllUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+      setNotification({ type: 'error', message: "Foydalanuvchilarni yuklashda xatolik yuz berdi!" });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // 1. Rolni o'zgartirish oynasini ochish
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // 2. Rolni o'zgartirish modalini ochish
   const openRoleModal = (user: AdminUserListItem) => {
     setSelectedUser(user);
     setNewRole(user.role);
     setIsModalOpen(true);
   };
 
-  // 2. Rolni saqlash (Backendga PATCH so'rov)
+  // 3. Rolni saqlash (Backendga PATCH so'rov)
   const handleSaveRole = async () => {
     if (!selectedUser) return;
     try {
       await adminApi.editRole(selectedUser.id, { role: newRole });
       
       setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, role: newRole } : u));
-      setNotification(`@${selectedUser.username} roli muvaffaqiyatli o'zgartirildi!`);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      setNotification({ type: 'success', message: `@${selectedUser.username} roli muvaffaqiyatli o'zgartirildi!` });
     } catch (err) {
-      // Mock rejimda ishlashi uchun local yangilaymiz
-      setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, role: newRole } : u));
-      setNotification(`Rol saqlandi (Local update)!`);
+      console.error(err);
+      setNotification({ type: 'error', message: "Rolni o'zgartirishda xatolik yuz berdi!" });
     } finally {
       setIsModalOpen(false);
       setSelectedUser(null);
     }
   };
 
-  // 3. Userni o'chirish (Backendga DELETE so'rov)
+  // 4. Userni o'chirish (Backendga DELETE so'rov)
   const handleRemoveUser = async (user: AdminUserListItem) => {
     if (window.confirm(`Haqiqatdan ham @${user.username} foydalanuvchisini o'chirmoqchisiz?`)) {
       try {
         await adminApi.removeUser(user.id);
         setUsers(prev => prev.filter(u => u.id !== user.id));
-        setNotification("Foydalanuvchi tizimdan muvaffaqiyatli o'chirildi!");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setNotification({ type: 'success', message: "Foydalanuvchi tizimdan muvaffaqiyatli o'chirildi!" });
       } catch (err) {
-        setUsers(prev => prev.filter(u => u.id !== user.id));
-        setNotification("Foydalanuvchi o'chirildi (Local update)!");
+        console.error(err);
+        setNotification({ type: 'error', message: "Foydalanuvchini o'chirishda xatolik yuz berdi!" });
       }
     }
   };
 
   // Qidiruv bo'yicha filterlash
   const filteredUsers = users.filter(u => 
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${u.firstName ?? ''} ${u.lastName ?? ''}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -93,75 +104,89 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Bildirishnomalar */}
         {notification && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-xl text-sm flex justify-between items-center">
-            <span>{notification}</span>
-            <button onClick={() => setNotification(null)} className="text-blue-400 hover:text-blue-600">×</button>
+          <div className={`p-4 rounded-xl text-sm flex justify-between items-center border ${
+            notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            <span>{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="font-bold text-lg leading-none">×</button>
           </div>
         )}
 
         {/* Foydalanuvchilar Jadvali (Table) */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-600 text-xs font-semibold uppercase tracking-wider border-b border-gray-100">
-                  <th className="px-6 py-4">Foydalanuvchi</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Holati</th>
-                  <th className="px-6 py-4">Roli</th>
-                  <th className="px-6 py-4 text-right">Amallar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50 transition">
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      <div>{user.firstName} {user.lastName}</div>
-                      <div className="text-xs text-gray-400">@{user.username}</div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">{user.email}</td>
-                    <td className="px-6 py-4">
-                      {user.enabled ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 text-green-700 rounded-md text-xs font-medium">
-                          <UserCheck size={12} /> Faol
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-md text-xs font-medium">
-                          <UserX size={12} /> Tasdiqlanmagan
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium ${user.role === UserRole.ADMIN ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button 
-                        onClick={() => openRoleModal(user)} 
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg inline-flex items-center transition"
-                        title="Rolni o'zgartirish"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleRemoveUser(user)} 
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg inline-flex items-center transition"
-                        title="O'chirish"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+            {loading ? (
+              <div className="flex justify-center items-center py-20 text-gray-500 gap-2">
+                <Loader2 className="animate-spin text-blue-600" size={24} />
+                <span>Foydalanuvchilar yuklanmoqda...</span>
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 text-xs font-semibold uppercase tracking-wider border-b border-gray-100">
+                    <th className="px-6 py-4">Foydalanuvchi</th>
+                    <th className="px-6 py-4">Email</th>
+                    <th className="px-6 py-4">Holati</th>
+                    <th className="px-6 py-4">Roli</th>
+                    <th className="px-6 py-4 text-right">Amallar</th>
                   </tr>
-                ))}
-                {filteredUsers.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">Foydalanuvchilar topilmadi.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        <div>{user.firstName || '—'} {user.lastName || ''}</div>
+                        <div className="text-xs text-gray-400">@{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{user.email}</td>
+                      <td className="px-6 py-4">
+                        {user.enabled ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 text-green-700 rounded-md text-xs font-medium">
+                            <UserCheck size={12} /> Faol
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-md text-xs font-medium">
+                            <UserX size={12} /> Tasdiqlanmagan
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                          user.role === UserRole.ADMIN ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button 
+                          onClick={() => openRoleModal(user)} 
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg inline-flex items-center transition"
+                          title="Rolni o'zgartirish"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleRemoveUser(user)} 
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg inline-flex items-center transition"
+                          title="O'chirish"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                        Foydalanuvchilar topilmadi.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
