@@ -3,6 +3,7 @@ package com.auth.backend.service;
 import com.auth.backend.constant.EnvironmentValues;
 import com.auth.backend.exception.CustomInternalServerErrorException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,12 +17,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class FileService {
-    private final EnvironmentValues environmentValues;
-
+    @Value("${file.upload.dir}")
+    private String uploadDir;
 
     public String  saveFile(MultipartFile file){
         try {
-            Path uploadPath = Paths.get(environmentValues.getUploadDir());
+            Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)){
                 Files.createDirectories(uploadPath);
             }
@@ -40,7 +41,7 @@ public class FileService {
     }
     public void removeFile(String avatar){
         try {
-            Path filePath = Paths.get(environmentValues.getUploadDir(),avatar);
+            Path filePath = Paths.get(uploadDir,avatar);
             Files.deleteIfExists(filePath);
         } catch (IOException exception){
             throw new CustomInternalServerErrorException(exception.getMessage());

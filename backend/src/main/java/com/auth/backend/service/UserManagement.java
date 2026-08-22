@@ -6,6 +6,7 @@ import com.auth.backend.exception.CustomBadRequestException;
 import com.auth.backend.exception.CustomNotFoundException;
 import com.auth.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,5 +36,8 @@ public class UserManagement {
         if (userRepository.findByEmail(email).isPresent()){
             throw new CustomBadRequestException(ResponseMessage.EXIST_USER);
         }
+    }
+    public UserEntity findByEmailOrUsername(String email,String username){
+        return userRepository.findByEmailOrUsername(email,username).orElseThrow(()-> new UsernameNotFoundException(ResponseMessage.NOT_FOUND));
     }
 }

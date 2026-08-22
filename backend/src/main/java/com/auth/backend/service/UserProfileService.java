@@ -5,12 +5,9 @@ import com.auth.backend.dto.user.EditUserRequest;
 import com.auth.backend.dto.user.UserResponse;
 import com.auth.backend.entity.UserEntity;
 import com.auth.backend.exception.CustomNotFoundException;
-import com.auth.backend.exception.CustomUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,33 +24,22 @@ public class UserProfileService {
         return input == null ? null : Jsoup.clean(input, Safelist.none());
     }
 
-    // Tizimga kirgan foydalanuvchini olish uchun yordamchi metod
-    private UserEntity getAuthenticatedUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new CustomUnauthorizedException(ResponseMessage.UNAUTHORIZED);
-        }
-        return userManagement.findUserByEmail(auth.getName());
-    }
-
     @Transactional
-    public void uploadAvatar(MultipartFile avatar) {
-        UserEntity user = getAuthenticatedUser();
-
+    public String uploadAvatar(UserEntity user, MultipartFile avatar) {
         if (avatar != null && !avatar.isEmpty()) {
-            // Eski avatarni o'chirish
             if (user.getAvatar() != null) {
                 fileService.removeFile(user.getAvatar());
             }
             String avatarName = fileService.saveFile(avatar);
             user.setAvatar(avatarName);
             userManagement.saveUser(user);
+            return avatarName; // Fayl nomini qaytaramiz
         }
+        return user.getAvatar();
     }
 
     @Transactional
-    public void removeAvatar() {
-        UserEntity user = getAuthenticatedUser();
+    public void removeAvatar(UserEntity user) {
         if (user.getAvatar() != null) {
             fileService.removeFile(user.getAvatar());
             user.setAvatar(null);
@@ -62,9 +48,7 @@ public class UserProfileService {
     }
 
     @Transactional
-    public UserResponse editUser(EditUserRequest request) {
-        UserEntity user = getAuthenticatedUser();
-
+    public UserResponse editUser(UserEntity user,EditUserRequest request) {
         Optional.ofNullable(request.firstName()).ifPresent(val -> user.setFirstName(sanitize(val)));
         Optional.ofNullable(request.bio()).ifPresent(val -> user.setBio(sanitize(val)));
         Optional.ofNullable(request.lastName()).ifPresent(user::setLastName);
@@ -81,8 +65,7 @@ public class UserProfileService {
     }
 
     @Transactional
-    public void removeSkills(String skillName) {
-        UserEntity user = getAuthenticatedUser();
+    public void removeSkills(UserEntity user,String skillName) {
         if (user.getSkills() == null || !user.getSkills().removeIf(skill -> skill.equals(skillName))) {
             throw new CustomNotFoundException(ResponseMessage.NOT_FOUND);
         }
@@ -90,15 +73,18 @@ public class UserProfileService {
     }
 
     @Transactional
-    public void removeSocialLinks(String social) {
-        UserEntity user = getAuthenticatedUser();
+    public void removeSocialLinks(UserEntity user,String social) {
         if (user.getSocialLinks() == null || !user.getSocialLinks().removeIf(s -> s.equals(social))) {
             throw new CustomNotFoundException(ResponseMessage.NOT_FOUND);
         }
         userManagement.saveUser(user);
     }
 
-    public UserResponse me() {
-        return UserResponse.from(getAuthenticatedUser());
+    @Transactional(readOnly = true)
+    public UserResponse me(Long userId) {
+        UserEntity user = userManagement.findUserById(userId);
+        return UserResponse.from(user);
     }
+
+
 }

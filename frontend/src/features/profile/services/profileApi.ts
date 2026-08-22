@@ -2,37 +2,40 @@ import axiosInstance from '../../../config/axiosInstance';
 import type { UserResponse, EditUserData } from '../types/profile.types';
 
 export const profileApi = {
-  editUser: async (id: number, data: EditUserData) => {
-    const response = await axiosInstance.patch<UserResponse>(`/profile/${id}/edit`, data);
+  getMe: async () => {
+    const response = await axiosInstance.get<UserResponse>('/profile/me');
     return response.data;
   },
 
-  uploadAvatar: async (id: number, file: File) => {
+  editUser: async (data: EditUserData) => {
+    const response = await axiosInstance.patch<UserResponse>('/profile/edit', data);
+    return response.data;
+  },
+
+  uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await axiosInstance.patch<string>(`/profile/${id}/avatar`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+
+    const response = await axiosInstance.patch<string>('/profile/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },
 
-  removeAvatar: async (id: number) => {
-    const response = await axiosInstance.post<string>(`/profile/${id}/avatar/remove`);
+  removeAvatar: async () => {
+    const response = await axiosInstance.delete<string>('/profile/avatar');
     return response.data;
   },
 
-  removeSkill: async (id: number, skillName: string) => {
-    const response = await axiosInstance.delete<string>(`/profile/${id}/skills/${skillName}`);
+  removeSkill: async (skillName: string) => {
+    const response = await axiosInstance.delete<string>(`/profile/skills/${encodeURIComponent(skillName)}`);
     return response.data;
   },
 
-  removeSocialLink: async (id: number, social: string) => {
-    const response = await axiosInstance.delete<string>(`/profile/${id}/socials/${social}`);
+  removeSocialLink: async (social: string) => {
+    const response = await axiosInstance.delete<string>(`/profile/socials/${encodeURIComponent(social)}`);
     return response.data;
   },
-
-  getMe: async () => {
-    const response = await axiosInstance.get<UserResponse>("/profile/me");
-    return response.data;
-  }
 };

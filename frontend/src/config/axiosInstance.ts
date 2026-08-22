@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '../store/useAuthStore';
 
 export const API_BASE_URL = 'http://localhost:8080/api/v1';
 
@@ -25,9 +26,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Request Interceptor: Tokenni Zustand store'dan olish
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('accessToken');
+    const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -36,15 +38,17 @@ axiosInstance.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
+// Response Interceptor: 401/403 va Otomatik Refresh
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+      
+      // Agar xatolik refresh so'rovining o'zidan chiqsa, seansni tugatamiz
       if (originalRequest.url?.includes('/auth/refresh')) {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
+        useAuthStore.getState().logout();
         return Promise.reject(error);
       }
 
@@ -63,19 +67,23 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axiosInstance.get('/auth/refresh', { withCredentials: true });
+        // TASHQI AXIOS: Interceptor takroriy ishga tushmasligi uchun oddiy `axios` ishlatiladi
+        const { data } = await axios.get<{ accessToken: string }>(`${API_BASE_URL}/auth/refresh`, {
+          withCredentials: true,
+        });
+
         const newToken = data.accessToken;
 
-        localStorage.setItem('accessToken', newToken);
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        // Zustand store va localStorage'ni bir vaqtda yangilaymiz
+        useAuthStore.getState().setAuth(newToken);
 
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
+
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
+        useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

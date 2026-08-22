@@ -1,18 +1,24 @@
 package com.auth.backend.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.auth.backend.constant.EnvironmentValues;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-@Configuration
-public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload.dir}")
-    private String uploadDir;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+@Configuration
+@RequiredArgsConstructor
+public class WebConfig implements WebMvcConfigurer {
+    private final EnvironmentValues environmentValues;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/files/**")
+        Path uploadDir = Paths.get(environmentValues.getUploadDir()).toAbsolutePath().normalize();
+
+        registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadDir + "/");
     }
 }

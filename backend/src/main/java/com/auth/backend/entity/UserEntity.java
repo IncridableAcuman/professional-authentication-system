@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -71,16 +72,11 @@ public class UserEntity implements UserDetails {
     @Column(name = "country")
     private String country;
 
-    // List<String> uchun JPA ElementCollection biriktirildi
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "skill")
-    private List<String> skills;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> socialLinks = new ArrayList<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_social_links", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "social_link")
-    private List<String> socialLinks;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> skills = new ArrayList<>();
 
     // Native Hibernate annotatsiyalari ishlatildi
     @CreationTimestamp
