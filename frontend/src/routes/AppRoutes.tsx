@@ -9,16 +9,19 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { ProfilePage } from "../features/profile/pages/ProfilePage";
 import { AdminRoute } from "./AdminRoute";
 import { AdminDashboard } from "../features/admin/pages/AdminDashboard";
+import { PublicRoute } from "./PublicRoute";
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Ochiq marshrutlar (Mehmonlar uchun) */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+      </Route>
 
       {/* Himoyalangan marshrutlar (Faqat tizimga kirganlar uchun) */}
       <Route element={<ProtectedRoute />}>

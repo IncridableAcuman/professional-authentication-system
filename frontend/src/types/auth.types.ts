@@ -39,3 +39,7 @@ export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 export interface AuthResponse {
   accessToken: string;
 }
+export interface AuthResponse {
+  accessToken: string;
+  role: 'USER' | 'ADMIN'; // Backenddan rol ham qaytishi lozim
+}

@@ -19,22 +19,27 @@ export const LoginPage: React.FC = () => {
     resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async (data: LoginData) => {
-    setLoading(true);
-    setApiError(null);
-    try {
-      const res = await authApi.login(data);
-      // Backenddan kelgan tokenni storega saqlaymiz (Rolni token ichidan yoki backend konfiguratsiyadan kelib chiqib berish mumkin)
-      // Hozircha vaqtincha 'USER' deb beramiz, keyinchalik buni avtomatlashtirish mumkin
-      setAuth(res.accessToken, 'USER'); 
+const onSubmit = async (data: LoginData) => {
+  setLoading(true);
+  setApiError(null);
+  try {
+    const res = await authApi.login(data);
+    
+    // Backenddan kelgan haqiqiy rolni uzatamiz
+    setAuth(res.accessToken, res.role); 
+    
+    if (res.role === 'ADMIN') {
+      navigate('/admin/dashboard');
+    } else {
       navigate('/profile');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      setApiError(error.response?.data?.message || "Email tasdiqlanmagan yoki parol xato!");
-    } finally {
-      setLoading(false);
     }
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    setApiError(error.response?.data?.message || "Email tasdiqlanmagan yoki parol xato!");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

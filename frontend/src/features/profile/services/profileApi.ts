@@ -9,7 +9,7 @@ export const profileApi = {
 
   uploadAvatar: async (id: number, file: File) => {
     const formData = new FormData();
-    formData.append('avatar', file); // Backend: @ModelAttribute MultipartFile avatar
+    formData.append('avatar', file);
     const response = await axiosInstance.patch<string>(`/profile/${id}/avatar`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -30,8 +30,9 @@ export const profileApi = {
     const response = await axiosInstance.delete<string>(`/profile/${id}/socials/${social}`);
     return response.data;
   },
-  getMe: async ()=>{
-    const response = await  axiosInstance.get<UserResponse>("/profile/me");
+
+  getMe: async () => {
+    const response = await axiosInstance.get<UserResponse>("/profile/me");
     return response.data;
   }
 };

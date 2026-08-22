@@ -1,3 +1,4 @@
+// store/useAuthStore.ts
 import { create } from 'zustand';
 
 interface AuthState {
@@ -8,16 +9,24 @@ interface AuthState {
   logout: () => void;
 }
 
+// Token bor-yo'qligini va rolni localStorage'dan o'qish
+const initialToken = localStorage.getItem('accessToken');
+const initialRole = localStorage.getItem('userRole') as 'USER' | 'ADMIN' | null;
+
 export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: localStorage.getItem('accessToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  userRole: null, // Buni dastlabki yuklanishda tokenni decode qilib olish ham mumkin
+  accessToken: initialToken,
+  isAuthenticated: !!initialToken,
+  userRole: initialRole,
+
   setAuth: (token, role) => {
     localStorage.setItem('accessToken', token);
+    localStorage.setItem('userRole', role);
     set({ accessToken: token, isAuthenticated: true, userRole: role });
   },
+
   logout: () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userRole');
     set({ accessToken: null, isAuthenticated: false, userRole: null });
   },
 }));
