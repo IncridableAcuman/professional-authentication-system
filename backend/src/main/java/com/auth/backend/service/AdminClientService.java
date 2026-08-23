@@ -15,15 +15,6 @@ public class AdminClientService {
     private final UserManagement userManagement;
     private final TokenService tokenService;
 
-    // Barcha foydalanuvchilarni olish
-    @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return userManagement.findAllUsers() // userRepository.findAll() ni chaqiradi
-                .stream()
-                .map(UserResponse::from)
-                .toList();
-    }
-
     @Transactional
     public void editRole(Long id, RoleRequest request){
         UserEntity user = userManagement.findUserById(id);
@@ -39,5 +30,5 @@ public class AdminClientService {
     }
     public List<UserResponse> getAllUsers() {
     return userManagement.findAll(); // findAllUsers() o'rniga findAll()
-}
+    }
 }

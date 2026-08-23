@@ -35,7 +35,7 @@ public class AdminClientController {
     }
 
     // Resolves to: PATCH /api/v1/admin
-    @PatchMapping
+    @PatchMapping(Endpoint.USER)
     public ResponseEntity<String> editRole(@RequestParam Long id, @RequestBody RoleRequest request){
         adminClientService.editRole(id, request);
         return ResponseEntity.ok(ResponseMessage.SUCCESS);

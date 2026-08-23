@@ -1,6 +1,7 @@
 package com.auth.backend.service;
 
 import com.auth.backend.constant.ResponseMessage;
+import com.auth.backend.dto.user.UserResponse;
 import com.auth.backend.entity.UserEntity;
 import com.auth.backend.exception.CustomBadRequestException;
 import com.auth.backend.exception.CustomNotFoundException;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,5 +42,11 @@ public class UserManagement {
     }
     public UserEntity findByEmailOrUsername(String email,String username){
         return userRepository.findByEmailOrUsername(email,username).orElseThrow(()-> new UsernameNotFoundException(ResponseMessage.NOT_FOUND));
+    }
+    public List<UserResponse> findAll(){
+        List<UserEntity> users = userRepository.findAll();
+        return users
+                .stream()
+                .map(UserResponse::from).toList();
     }
 }
