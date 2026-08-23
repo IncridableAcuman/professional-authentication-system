@@ -1,7 +1,7 @@
 # Professional Full Stack Authentication System
 Professional authentication system built with Spring Boot, React,Typescript and jwt authentication.
 
-![User Management System](./public/userManagement.png)
+![User Management System][./public/userManagement.png]
 
 **Features:**
 - JWT Authentication
